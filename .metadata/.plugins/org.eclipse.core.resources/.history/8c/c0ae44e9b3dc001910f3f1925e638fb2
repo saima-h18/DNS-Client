@@ -26,9 +26,9 @@ public class DnsClient {
 		int timeout = 5;
 		int maxRetry = 3;
 		int port = 53;
-		String Qtype = "NS"; //1 = A , 2= NS, 15= MX
+		String Qtype = "A"; //1 = A , 2= NS, 15= MX
 		String ip = "132.206.85.18";
-		String Qname = "mcgill.ca";
+		String Qname = "www.mcgill.ca";
 		
 				
 		// Create a UDP socket
@@ -256,8 +256,8 @@ public class DnsClient {
 		String ttlString = Integer.toHexString(unSignedval1)+Integer.toHexString(unSignedval2)+Integer.toHexString(unSignedval3)+Integer.toHexString(unSignedval4);
 		System.out.println("ttl:");
 		int ttl = Integer.parseInt(ttlString,16);
-		System.out.println(ttlString); //hex
-		System.out.println(ttl);		//decimal
+		System.out.println(ttlString);
+		System.out.println(ttl);
 		
 		
 		
@@ -290,26 +290,9 @@ public class DnsClient {
 			System.out.println(IPString);
 		}
 		
-		else if (responseType == "NS") {
-			
-			System.out.println(Qname);
-			
-		}
 		
-		else if (responseType == "CNAME") {
-			dPointer++;
-			
-			while(byteRec[dPointer]!=0) {
-				int size = byteRec[dPointer];
-				String alias = "";
-
-				for(int x=0;x<size;x++) {
-					alias = Character.toString((char)byteRec[dPointer++]);
-					
-				}
-				alias= alias + ".";
-			}
-		}
+		
+		
 		
 		
 		//System.out.println("\n" + "st" + receivePacket.getData());
