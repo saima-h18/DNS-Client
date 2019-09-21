@@ -255,14 +255,10 @@ public class DnsClient {
 		
 		String ttlString = Integer.toHexString(unSignedval1)+Integer.toHexString(unSignedval2)+Integer.toHexString(unSignedval3)+Integer.toHexString(unSignedval4);
 		System.out.println("ttl:");
-		int ttl = Integer.parseInt(ttlString,16);
 		System.out.println(ttlString);
-		System.out.println(ttl);
-		
-		
 		
 		byte[] rdArr = new byte[2];
-		//dPointer++; 
+		dPointer++; 
 		rdArr[0] = byteRec[dPointer++];
 		
 		int unSignedval5 = rdArr[0] & mask;
@@ -272,28 +268,6 @@ public class DnsClient {
 		String rdString = Integer.toHexString(unSignedval5)+Integer.toHexString(unSignedval6);
 
 		System.out.println(rdString);
-		
-		
-		if(responseType == "A") {
-			byte[] IPArr = new byte[4];
-			//dPointer++; 
-			IPArr[0] = byteRec[dPointer++];
-			int unSignedval7 = IPArr[0] & mask;
-			IPArr[1] = byteRec[dPointer++];
-			int unSignedval8 = IPArr[1] & mask;
-			IPArr[2] = byteRec[dPointer++];
-			int unSignedval9 = IPArr[2] & mask;
-			IPArr[3] = byteRec[dPointer++];
-			int unSignedval10 = IPArr[3] & mask;
-			String IPString = Integer.toString(unSignedval7)+"."+Integer.toString(unSignedval8)+"."+Integer.toString(unSignedval9)+"."+Integer.toString(unSignedval10);
-	
-			System.out.println(IPString);
-		}
-		
-		
-		
-		
-		
 		
 		//System.out.println("\n" + "st" + receivePacket.getData());
 		

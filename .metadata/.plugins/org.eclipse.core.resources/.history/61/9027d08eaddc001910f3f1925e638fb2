@@ -255,7 +255,7 @@ public class DnsClient {
 		
 		String ttlString = Integer.toHexString(unSignedval1)+Integer.toHexString(unSignedval2)+Integer.toHexString(unSignedval3)+Integer.toHexString(unSignedval4);
 		System.out.println("ttl:");
-		int ttl = Integer.parseInt(ttlString,16);
+		int ttl = Integer.parseInt(ttlString);
 		System.out.println(ttlString);
 		System.out.println(ttl);
 		

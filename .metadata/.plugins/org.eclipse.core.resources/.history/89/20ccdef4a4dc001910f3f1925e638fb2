@@ -138,7 +138,7 @@ public class DnsClient {
 			  
 			  for(int j=0; j<carray.length; j++) {
 				 
-				  sendData[indx++] = (byte) carray[j]; //did operation then increment
+				  sendData[indx++] = (byte) carray[j];
 				  System.out.print( "carray" + (byte) carray[j] + " ") ;
 				  
 			  }
@@ -198,102 +198,10 @@ public class DnsClient {
 		
 		byte[] byteRec = receivePacket.getData();
 
-		int dPointer = 12; //pointer before domain name begins
 		
-		while(byteRec[dPointer] != 0) {
-			dPointer++;		//domain name ends
-		}
-		
-		dPointer = dPointer+7; // add 8 bytes to signify the beginning of the Type response
-
-		dPointer = dPointer+1; // add 1 byte to skip over the byte of zeroes in the Type response
-
-		String responseType= "";
-		
-		if(byteRec[dPointer]== 1) {
-			responseType = "A";
-		}
-		
-		if(byteRec[dPointer]== 2) {
-			responseType = "NS";
-		}
-		
-		if(byteRec[dPointer]== 15) {
-			responseType = "MX";
-		}
-		
-		if(byteRec[dPointer]== 5) {
-			responseType = "CNAME";
-		}
-		dPointer++;
-		
-		if((byteRec[dPointer++]==0) && (byteRec[dPointer++]==1)){
-			System.out.println("Response class IN");
-			System.out.println("reponse type:"+ responseType);
-		}
-		else {
-			System.out.println("ERROR : Different value encountered for Qcode");
-		}
-		
-
-		byte[] ttlArr = new byte[4];
-		int mask = 0xFF;
-		
-		ttlArr[0] = byteRec[dPointer];
-		System.out.println(dPointer);
-		dPointer++; // increment from index 37 to index 38..why?
-		
-		int unSignedval1 = ttlArr[0] & mask;
-		ttlArr[1] = byteRec[dPointer++];
-		int unSignedval2 = ttlArr[1] & mask;
-		ttlArr[2] = byteRec[dPointer++];
-		int unSignedval3 = ttlArr[2] & mask;
-		ttlArr[3] = byteRec[dPointer++];
-		int unSignedval4 = ttlArr[3] & mask;
-		
-		System.out.println(Arrays.toString(ttlArr));
-		
-		String ttlString = Integer.toHexString(unSignedval1)+Integer.toHexString(unSignedval2)+Integer.toHexString(unSignedval3)+Integer.toHexString(unSignedval4);
-		System.out.println("ttl:");
-		int ttl = Integer.parseInt(ttlString,16);
-		System.out.println(ttlString);
-		System.out.println(ttl);
-		
-		
-		
-		byte[] rdArr = new byte[2];
-		//dPointer++; 
-		rdArr[0] = byteRec[dPointer++];
-		
-		int unSignedval5 = rdArr[0] & mask;
-		rdArr[1] = byteRec[dPointer++];
-		int unSignedval6 = rdArr[1] & mask;
-
-		String rdString = Integer.toHexString(unSignedval5)+Integer.toHexString(unSignedval6);
-
-		System.out.println(rdString);
-		
-		
-		if(responseType == "A") {
-			byte[] IPArr = new byte[4];
-			//dPointer++; 
-			IPArr[0] = byteRec[dPointer++];
-			int unSignedval7 = IPArr[0] & mask;
-			IPArr[1] = byteRec[dPointer++];
-			int unSignedval8 = IPArr[1] & mask;
-			IPArr[2] = byteRec[dPointer++];
-			int unSignedval9 = IPArr[2] & mask;
-			IPArr[3] = byteRec[dPointer++];
-			int unSignedval10 = IPArr[3] & mask;
-			String IPString = Integer.toString(unSignedval7)+"."+Integer.toString(unSignedval8)+"."+Integer.toString(unSignedval9)+"."+Integer.toString(unSignedval10);
-	
-			System.out.println(IPString);
-		}
-		
-		
-		
-		
-		
+//		for(int n=0; n<receivePacket.getData().length; n++) {
+//			byteRec[]
+//		}
 		
 		//System.out.println("\n" + "st" + receivePacket.getData());
 		
