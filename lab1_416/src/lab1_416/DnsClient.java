@@ -13,6 +13,7 @@ import java.io.*;
 import java.net.*;
 import java.util.Arrays;
 import java.util.Random;
+import java.util.Timer;
 import java.lang.Math;
 import java.lang.reflect.Array;
 
@@ -26,9 +27,9 @@ public class DnsClient {
 		int timeout = 5;
 		int maxRetry = 3;
 		int port = 53;
-		String Qtype = "NS"; //1 = A , 2= NS, 15= MX
-		String ip = "132.206.85.18";
-		String Qname = "mcgill.ca";
+		String Qtype = "A"; //1 = A , 2= NS, 15= MX
+		String ip = "8.8.8.8";
+		String Qname = "www.mcgill.ca";
 		
 				
 		// Create a UDP socket
@@ -100,7 +101,7 @@ public class DnsClient {
 		System.out.print("\n");
 		sendData[0] = two[0];
 		sendData[1] = two[1];
-		System.out.print(sendData[0]);
+		System.out.println((byte)sendData[0]);
 		
 		sendData[2] = 00000001;  //QR =0 , PCODE = 0000 , AA =0 , TC=0 , RD =1 Recursion
 		
@@ -171,6 +172,7 @@ public class DnsClient {
 		 sendData[30] = 1;	  // Qclass = 1
 			 		 
 
+		
 		// Convert the sentence from a String to an array of bytes
 		
 		//sendData = sentence.getBytes();
@@ -179,20 +181,58 @@ public class DnsClient {
 		// This involves specifying the sender's address and port number
 		DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, ipAddress, port);
 		
+		
+		
+		
+		
 		// Send the packet
 		clientSocket.send(sendPacket);
+		long startTime = System.currentTimeMillis();
+
+
 		
 		// Create a packet structure to store data sent back by the server
 		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 		
-		// Receive data from the server
-		clientSocket.receive(receivePacket);
+		int retry = 0;
+		clientSocket.setSoTimeout(timeout*1000);
 		
+		while(retry<=maxRetry) {
+			try {
+				clientSocket.receive(receivePacket);
+				break;
+			}
+			catch(SocketTimeoutException e) {
+				clientSocket.send(sendPacket);
+				retry++;
+			}
+		}
+		
+		
+		if(retry>maxRetry) {
+			try {
+				maxRetriesError(maxRetry);
+			}
+			catch(SocketTimeoutException e){
+				System.out.println("\n" + "ERROR" +"\t"+ "Maximum number of retries [" + maxRetry +"] exceeded");
+			}
+		}
+		
+		
+		
+
+		// Receive data from the server
+		
+		//clientSocket.receive(receivePacket);
+		long endTime = System.currentTimeMillis();
+		System.out.println();
+		long timeTaken = (long)((endTime - startTime));
+		System.out.println("Response received after " + timeTaken + " milliseconds" + "["  + retry + "]" + "retries");
 		
 		
 		// Extract the sentence (as a String object) from the received byte stream
 		String modifiedSentence = new String(receivePacket.getData());
-		
+
 		
 		System.out.println("From Server: " + modifiedSentence);
 		
@@ -226,6 +266,7 @@ public class DnsClient {
 			responseType = "CNAME";
 		}
 		dPointer++;
+		System.out.println("reponse type:"+ responseType);
 		
 		if((byteRec[dPointer++]==0) && (byteRec[dPointer++]==1)){
 			System.out.println("Response class IN");
@@ -298,18 +339,46 @@ public class DnsClient {
 		
 		else if (responseType == "CNAME") {
 			dPointer++;
-			
-			while(byteRec[dPointer]!=0) {
-				int size = byteRec[dPointer];
-				String alias = "";
+			String alias = "";
 
-				for(int x=0;x<size;x++) {
-					alias = Character.toString((char)byteRec[dPointer++]);
+			while(byteRec[dPointer]!=0) {
+
+				
+				System.out.println("here"+dPointer);
+
+				
+				if(byteRec[dPointer] == 97) {
+					dPointer++;
+					int pointer = byteRec[dPointer];
+					int size = byteRec[pointer];
+					for(int i =0; i<size; i++) {
+						pointer++;
+						alias = alias + (char)byteRec[pointer];
+					}
+					dPointer++;
+					if(byteRec[dPointer]!=0) {
+						alias = alias + ".";
+					}
+
 					
 				}
-				alias= alias + ".";
+				else {
+					int size = byteRec[dPointer];
+					for(int i = 0; i<size; i++) {
+						dPointer++;
+						alias = alias + (char)byteRec[dPointer];
+					}
+					dPointer++;
+					if(byteRec[dPointer]!=0) {
+						alias = alias + ".";
+					
+					}
+				}
 			}
+			System.out.println(alias);
+
 		}
+		
 		
 		
 		//System.out.println("\n" + "st" + receivePacket.getData());
@@ -330,6 +399,9 @@ public class DnsClient {
 		clientSocket.close();
 	}
 	
+	private static void maxRetriesError(int x) throws SocketTimeoutException {
+		throw new SocketTimeoutException ();
+	}
 	
 	public static int unByte(byte d) {
 		return (d & 0xFF);
