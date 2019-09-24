@@ -122,9 +122,6 @@ public class DnsClient {
 		String [] bytesString= ip.split("\\.");
 			    
 
-
-	    
-		
 //		   System.out.print(bytesString.length + "\n");
 //		   for(int i=0; i< bytesString.length ; i++) {
 //		     System.out.print(bytesString[i] +" ");
@@ -224,7 +221,6 @@ public class DnsClient {
 			 sendData[28] = 15;	
 	 }
 		 
-		 
 		 sendData[29] = 0;	
 		 sendData[30] = 1;	  // Qclass = 1
 			 		 
@@ -272,9 +268,6 @@ public class DnsClient {
 			}
 		}
 		
-		
-		
-
 		// Receive data from the server
 		
 		//clientSocket.receive(receivePacket);
@@ -302,6 +295,7 @@ public class DnsClient {
 
 		dPointer = dPointer+1; // add 1 byte to skip over the byte of zeroes in the Type response
 
+		System.out.println("th"+dPointer);
 		String responseType= "";
 		
 		if(byteRec[dPointer]== 1) {
@@ -319,17 +313,17 @@ public class DnsClient {
 		if(byteRec[dPointer]== 5) {
 			responseType = "CNAME";
 		}
+		dPointer=dPointer+1; //skip zero
 		dPointer++;
 		System.out.println("reponse type:"+ responseType);
-		
-		if((byteRec[dPointer++]==0) && (byteRec[dPointer++]==1)){
+
+		if((byteRec[dPointer]==1)){
 			System.out.println("Response class IN");
 			System.out.println("response type:"+ responseType);
 		}
 		else {
 			System.out.println("ERROR : Different value encountered for Qcode");
 		}
-		
 
 		
 		byte[] ttlArr = new byte[4];
@@ -367,7 +361,7 @@ public class DnsClient {
 
 		String rdString = Integer.toHexString(unSignedval5)+Integer.toHexString(unSignedval6);
 
-		System.out.println(rdString);
+		System.out.println("rdString: "+rdString);
 		
 		
 		if(responseType == "A") {
@@ -386,6 +380,7 @@ public class DnsClient {
 			System.out.println("IP \t" + IPString + "\t" + ttl + "\t" +"addauth");
 		}
 		
+		
 		else if (responseType == "NS") {
 			
 			System.out.println(Qname);
@@ -399,10 +394,8 @@ public class DnsClient {
 			while(byteRec[dPointer]!=0) {
 
 				
-				System.out.println("here"+dPointer);
-
-				
-				if(byteRec[dPointer] == 97) {
+				if((byteRec[dPointer] & 0xFF) >= 0xC0) {
+					System.out.println("hi");
 					dPointer++;
 					int pointer = byteRec[dPointer];
 					int size = byteRec[pointer];
@@ -414,7 +407,6 @@ public class DnsClient {
 					if(byteRec[dPointer]!=0) {
 						alias = alias + ".";
 					}
-
 					
 				}
 				else {
@@ -428,7 +420,21 @@ public class DnsClient {
 						alias = alias + ".";
 					
 					}
+					if((byteRec[dPointer] & 0xFF) >= 0xC0) {
+						dPointer++;
+						int pointer = byteRec[dPointer];
+						int size1 = byteRec[pointer];
+						for(int i =0; i<size1; i++) {
+							pointer++;
+							alias = alias + (char)byteRec[pointer];
+						}
+						dPointer++;
+						if(byteRec[dPointer]!=0) {
+							alias = alias + ".";
+						}
 				}
+			}
+			
 			}
 			System.out.println(alias);
 			//System.out.println("CNAME \t" + alias + "\t" + ttl + "\t" + auth);
@@ -436,7 +442,6 @@ public class DnsClient {
 		else if (responseType == "MX") {
 		
 		}
-		
 		
 		// Close the socket
 		clientSocket.close();
