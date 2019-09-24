@@ -118,11 +118,13 @@ public class DnsClient {
 		// Resolve a domain name to an IP address object
 		// In this case, "localhost" maps to the so-called loop-back address, 127.0.0.1
 		
-	    ip= ip.replaceAll("@","");
+	    //remove at sign
+	    ip= ip.replaceAll("[^a-zA-Z0-9]","");
+	    
 		String [] bytesString= ip.split("\\.");
-			    
+		
 
-
+	    
 	    
 		
 //		   System.out.print(bytesString.length + "\n");
