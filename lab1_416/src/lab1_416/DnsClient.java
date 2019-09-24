@@ -315,7 +315,7 @@ public class DnsClient {
 		}
 		dPointer=dPointer+1; //skip zero
 		dPointer++;
-		System.out.println("reponse type:"+ responseType);
+		System.out.println("response type:"+ responseType);
 
 		if((byteRec[dPointer]==1)){
 			System.out.println("Response class IN");
@@ -325,22 +325,29 @@ public class DnsClient {
 			System.out.println("ERROR : Different value encountered for Qcode");
 		}
 
-		
+		dPointer++;
 		byte[] ttlArr = new byte[4];
 		int mask = 0xFF;
 		
 		ttlArr[0] = byteRec[dPointer];
 		System.out.println(dPointer);
-		dPointer++; // increment from index 37 to index 38..why?
+		dPointer=dPointer+1; // increment from index 37 to index 38..why?
 		
+		System.out.println("here");
 		int unSignedval1 = ttlArr[0] & mask;
 		ttlArr[1] = byteRec[dPointer++];
+		System.out.println(unSignedval1);
 		int unSignedval2 = ttlArr[1] & mask;
 		ttlArr[2] = byteRec[dPointer++];
+		System.out.println(unSignedval2);
+
 		int unSignedval3 = ttlArr[2] & mask;
 		ttlArr[3] = byteRec[dPointer++];
+		System.out.println(unSignedval3);
+
 		int unSignedval4 = ttlArr[3] & mask;
-		
+		System.out.println(unSignedval4);
+
 		System.out.println(Arrays.toString(ttlArr));
 		
 		String ttlString = Integer.toHexString(unSignedval1)+Integer.toHexString(unSignedval2)+Integer.toHexString(unSignedval3)+Integer.toHexString(unSignedval4);
@@ -388,27 +395,37 @@ public class DnsClient {
 		}
 		
 		else if (responseType == "CNAME") {
-			dPointer++;
+			//dPointer++;
 			String alias = "";
 
 			while(byteRec[dPointer]!=0) {
 
 				
 				if((byteRec[dPointer] & 0xFF) >= 0xC0) {
-					System.out.println("hi");
+
 					dPointer++;
 					int pointer = byteRec[dPointer];
-					int size = byteRec[pointer];
-					for(int i =0; i<size; i++) {
-						pointer++;
-						alias = alias + (char)byteRec[pointer];
-					}
-					dPointer++;
-					if(byteRec[dPointer]!=0) {
-						alias = alias + ".";
-					}
+					while(byteRec[pointer]!=0) {
+
+						int size = byteRec[pointer];
+						for(int i =0; i<size; i++) {
+							pointer++;
+							alias = alias + (char)byteRec[pointer];
+						}
+					
+						dPointer++;
+						if(byteRec[dPointer]!=0) {
+							alias = alias + ".";
+							pointer++;
+							
+						}
+					
 					
 				}
+					dPointer++;
+										
+				}
+				
 				else {
 					int size = byteRec[dPointer];
 					for(int i = 0; i<size; i++) {
@@ -420,24 +437,13 @@ public class DnsClient {
 						alias = alias + ".";
 					
 					}
-					if((byteRec[dPointer] & 0xFF) >= 0xC0) {
-						dPointer++;
-						int pointer = byteRec[dPointer];
-						int size1 = byteRec[pointer];
-						for(int i =0; i<size1; i++) {
-							pointer++;
-							alias = alias + (char)byteRec[pointer];
-						}
-						dPointer++;
-						if(byteRec[dPointer]!=0) {
-							alias = alias + ".";
-						}
-				}
+					
 			}
-			
 			}
-			System.out.println(alias);
-			//System.out.println("CNAME \t" + alias + "\t" + ttl + "\t" + auth);
+			//System.out.println(alias);
+	        alias = alias.substring(0, alias.length() - 1);
+
+			System.out.println("CNAME \t" + alias + "\t" + ttl + "\t" + "auth or not");
 		}
 		else if (responseType == "MX") {
 		
