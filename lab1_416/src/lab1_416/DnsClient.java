@@ -32,6 +32,7 @@ public class DnsClient {
 
 		String Qname = "";
 		String ip = "";
+		String auth = "";
 		//String ipArr[] = new String [4];
 		//String ipArr[] = {"","","","",};
 
@@ -157,7 +158,7 @@ public class DnsClient {
 		sendData[0] = two[0];
 		sendData[1] = two[1];
 
-		sendData[2] = 00000001;  //QR =0 , PCODE = 0000 , AA =0 , TC=0 , RD =1 Recursion
+		sendData[2] = 00000001;  //QR =0 , OPCODE = 0000 , AA =0 , TC=0 , RD =1 Recursion
 
 		sendData[3] = 00000000; // Ra, Z, RCODE = 0
 
@@ -272,22 +273,82 @@ public class DnsClient {
 
 		//clientSocket.receive(receivePacket);
 		long endTime = System.currentTimeMillis();
-		System.out.println();
 		long timeTaken = (long)((endTime - startTime));
 		System.out.println("Response received after " + timeTaken + " milliseconds " + "(["  + retry + "]) " + "retries");
 
 
 		// Extract the sentence (as a String object) from the received byte stream
-		String modifiedSentence = new String(receivePacket.getData());
+		//String modifiedSentence = new String(receivePacket.getData());
 
 
-		System.out.println("From Server: " + modifiedSentence);
+		//System.out.println("From Server: " + modifiedSentence);
 		
 		
 		/////reading response//////
 
 		byte[] byteRec = receivePacket.getData();
+		
+		//Packet Header of the response
+		
+		//3rd byte in the header
+		String bin = String.format("%8s", Integer.toBinaryString(byteRec[3]&0xff)).replace(' ', '0');
 
+		//String bin = Integer.toBinaryString(byteRec[3]&0xff);
+		
+		// 5th character in the 3rd byte
+		//System.out.println(bin.charAt(5));
+		char s = bin.charAt(5);
+		if (s == '0') {
+			auth = "nonauth";
+		}
+		else if (s == '1') {
+			auth = "auth";
+		}
+		
+		//String bin2 = Integer.toBinaryString(byteRec[4]&0xff).replace('', '0');
+
+		String bin2 = String.format("%8s", Integer.toBinaryString(byteRec[4]&0xff)).replace(' ', '0');
+		// 1st character in the 4th byte
+		//System.out.println("bin2 "+ bin2);
+		if (bin2.charAt(1)==0) {
+			System.out.println("ERROR" + "\t" + "Server does not support recursion");
+		}
+
+		String rCode = bin2.substring(4,8);
+		//System.out.println("rcode"+rCode);
+		
+		if(rCode.equals("0001")) {
+			System.out.println("ERROR" + "\t" + "Format error: the name server was unable to interpret the query");
+		}
+		else if(rCode.equals("0010")) {
+			System.out.println("ERROR" + "\t" + "Server failure: the name server was unable to process this query due to a problem with the name server");
+		}
+		else if(rCode.equals("0011")) {
+			System.out.println("RECORD NOT FOUND");
+		}
+		else if(rCode.equals("0100")) {
+			System.out.println("ERROR" + "\t" + "Not implemented: the name server does not support the requested kind of query");
+		}
+		else if(rCode.equals("0101")) {
+			System.out.println("ERROR" + "\t" + "Refused: the name server refuses to perform the requested operation for policy reason");
+		}
+		
+		int ancount = (receiveData[6] << 8) | receiveData[7];
+
+		System.out.println("***Answer Section (" + ancount + " records)***");
+		
+		if(ancount == 0) {
+			System.out.println("NOT FOUND");
+		}
+		
+		int arcount = (receiveData[10] << 8) | receiveData[11];
+
+		System.out.println("***Additional Section (" + arcount + " records)***");
+
+		if(arcount == 0) {
+			System.out.println("NOT FOUND");
+		}
+		
 		int dPointer = 12; //pointer before domain name begins
 
 		while(byteRec[dPointer] != 0) {
@@ -298,7 +359,7 @@ public class DnsClient {
 
 		dPointer = dPointer+1; // add 1 byte to skip over the byte of zeroes in the Type response
 
-		System.out.println("th"+dPointer);
+		//System.out.println("th"+dPointer);
 		String responseType= "";
 
 		if(byteRec[dPointer]== 1) {
@@ -318,13 +379,8 @@ public class DnsClient {
 		}
 		dPointer=dPointer+1; //skip zero
 		dPointer++;
-		System.out.println("response type:"+ responseType);
 
-		if((byteRec[dPointer]==1)){
-			System.out.println("Response class IN");
-			System.out.println("response type:"+ responseType);
-		}
-		else {
+		if((byteRec[dPointer]==0) && arcount !=0){
 			System.out.println("ERROR : Different value encountered for Qcode");
 		}
 
@@ -333,31 +389,24 @@ public class DnsClient {
 		int mask = 0xFF;
 
 		ttlArr[0] = byteRec[dPointer];
-		System.out.println(dPointer);
 		dPointer=dPointer+1; // increment from index 37 to index 38..why?
 
-		System.out.println("here");
 		int unSignedval1 = ttlArr[0] & mask;
 		ttlArr[1] = byteRec[dPointer++];
-		System.out.println(unSignedval1);
 		int unSignedval2 = ttlArr[1] & mask;
 		ttlArr[2] = byteRec[dPointer++];
-		System.out.println(unSignedval2);
 
 		int unSignedval3 = ttlArr[2] & mask;
 		ttlArr[3] = byteRec[dPointer++];
-		System.out.println(unSignedval3);
 
 		int unSignedval4 = ttlArr[3] & mask;
-		System.out.println(unSignedval4);
 
-		System.out.println(Arrays.toString(ttlArr));
 
 		String ttlString = Integer.toHexString(unSignedval1)+Integer.toHexString(unSignedval2)+Integer.toHexString(unSignedval3)+Integer.toHexString(unSignedval4);
-		System.out.println("ttl:");
+		//System.out.println("ttl:");
 		int ttl = Integer.parseInt(ttlString,16);
-		System.out.println(ttlString); //hex
-		System.out.println(ttl);		//decimal
+		//System.out.println(ttlString); //hex
+		//System.out.println(ttl);		//decimal
 
 
 
@@ -371,7 +420,7 @@ public class DnsClient {
 
 		String rdString = Integer.toHexString(unSignedval5)+Integer.toHexString(unSignedval6);
 
-		System.out.println("rdString: "+rdString);
+		//System.out.println("rdString: "+rdString);
 
 
 		if(responseType == "A") {
@@ -387,7 +436,7 @@ public class DnsClient {
 			int unSignedval10 = IPArr[3] & mask;
 			String IPString = Integer.toString(unSignedval7)+"."+Integer.toString(unSignedval8)+"."+Integer.toString(unSignedval9)+"."+Integer.toString(unSignedval10);
 
-			System.out.println("IP \t" + IPString + "\t" + ttl + "\t" +"addauth");
+			System.out.println("IP \t" + IPString + "\t" + ttl + "ms"+ "\t" + auth);
 		}
 
 
@@ -438,7 +487,7 @@ public class DnsClient {
 			}
 			alias = alias.substring(0, alias.length() - 1);
 
-			System.out.println("NS \t" + alias + "\t" + ttl + "\t" + "auth");
+			System.out.println("NS" + "\t" + alias + "\t" + ttl + " ms"+"\t" + auth);
 
 		}
 
@@ -491,7 +540,7 @@ public class DnsClient {
 			//System.out.println(alias);
 			alias = alias.substring(0, alias.length() - 1);
 
-			System.out.println("CNAME \t" + alias + "\t" + ttl + "\t" + "auth or not");
+			System.out.println("CNAME \t" + alias + "\t" + ttl + " ms"+ "\t" + auth);
 		}
 		else if (responseType == "MX") {
 			
@@ -545,7 +594,7 @@ public class DnsClient {
 			}
 			//alias = alias.substring(0, alias.length() - 1);
 
-			System.out.println("MX " + alias + "\t" + ttl + "\t" + pref);
+			System.out.println("MX" + "\t" + alias + "\t" + pref + "\t" + ttl + " ms" + "\t" + auth);
 
 		}
 
