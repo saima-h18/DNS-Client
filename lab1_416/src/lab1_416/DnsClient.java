@@ -28,7 +28,7 @@ public class DnsClient {
 		int timeout = 5;
 		int maxRetry = 3;
 		int port = 53;
-		String Qtype = "A"; //1 = A , 2= NS, 15= MX
+		String Qtype = ""; //1 = A , 2= NS, 15= MX
 
 		String Qname = "";
 		String ip = "";
