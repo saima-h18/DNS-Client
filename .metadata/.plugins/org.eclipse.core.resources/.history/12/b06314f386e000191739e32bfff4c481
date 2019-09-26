@@ -50,19 +50,14 @@ public class DnsClient1 {
 					
 					if(i==args.length-2) {
 						// checks if ip starts with at sign 
-						if (arrArgs[j] == '@' && arrArgs[j+1]=='@') {
+						if (arrArgs[j] == '@' ) {
 	
-							System.out.println("ERROR\t incorrect syntax \n Proper format: [-t] [-r] [-p] [-nx || -mx] @server name");
-							System.exit(1);
-						} 
-						if (arrArgs[j] == '@') {
-							
 							// allocates server variable and name variable
 							ip = args[i];
 							Qname = args[i+1]; 
 							at++;
-							break;
-						}   
+							//break;
+						}                   
 	
 						else {
 							System.out.println("ERROR\t incorrect syntax \n Proper format: [-t] [-r] [-p] [-nx || -mx] @server name");
@@ -160,14 +155,7 @@ public class DnsClient1 {
 		}
 
 		ip= ip.replaceAll("@","");
-		
 		String [] bytesString= ip.split("\\.");
-		for(int j=0; j< bytesString.length;j++) {
-			if(Integer.parseInt(bytesString[j]) <0 || Integer.parseInt(bytesString[j])>255){
-				System.out.println("ERROR\t Please make sure your arguments follows the correct format");
-				System.exit(1);
-			}
-		}
 
 		byte[] IPBytes = new byte [] {(byte) (Integer.parseInt(bytesString[0])), (byte) (Integer.parseInt(bytesString[1])), (byte) (Integer.parseInt(bytesString[2])), (byte) (Integer.parseInt(bytesString[3]))};
 
@@ -183,7 +171,7 @@ public class DnsClient1 {
 				byte[] receiveData = new byte[1024];
 
 
-				// two new random bytes for ID
+
 				Random y = new Random(); 
 				byte[] two = new byte[2];
 				y.nextBytes(two);
@@ -198,7 +186,7 @@ public class DnsClient1 {
 
 				sendData[4] = 00000000; // QDCOUNT = 1 , 16 bits
 
-				sendData[5] = 00000001; // 
+				sendData[5] = 00000001; // QDCOUNT = 1 , 16 bits
 
 				sendData[6] = 00000000; // 
 
@@ -213,16 +201,14 @@ public class DnsClient1 {
 
 				//DATA           
 
-				// Splitting the domain name (removing the periods)
+
+        
 				String[] stringName = Qname.split("\\.");
-				// thats where the data (header ends)
 		        int indx = 12;
-		        //splits by words (separated by periods)
 		        for (int i = 0; i < stringName.length; i++) {
 		            // Adds the number of characters in the name label
 		            sendData[indx] = (byte) stringName[i].length();
 		            indx++;
-		            //splits by characters
 		            for (int j = 0; j < stringName[i].length(); j++) {
 		                // Converts each character in the label to the corresponding ASCII code
 		                sendData[indx] = (byte) stringName[i].charAt(j);
@@ -233,9 +219,8 @@ public class DnsClient1 {
 				sendData[indx] = 0; // End QName field 
 				indx++;
 
-				sendData[indx] = 0;		//skip a zero for type
+				sendData[indx] = 0;	
 				indx++;
-				// type based on arguments
 				if(a==true) {
 					sendData[indx] = 1;	
 				}
@@ -247,14 +232,15 @@ public class DnsClient1 {
 					sendData[indx] = 15;	
 				}
 				indx++;
-				sendData[indx] = 0;	// Qclass = 1 (representing Internet address
+				sendData[indx] = 0;	
 				indx++;
-				sendData[indx] = 1;	  // Qclass = 1 (representing Internet address
+				sendData[indx] = 1;	  // Qclass = 1
 
-		// Create a UDP packet to be sent to the server
-		// This involves specifying the sender's address and port number
+				// Create a UDP packet to be sent to the server
+				// This involves specifying the sender's address and port number
 		DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, ipAddress, port);
 
+		//long startTime = System.currentTimeMillis();
 
 		// Summary of the query sent
 		System.out.println("DnsClient sending request for " + "[" + Qname + "]" );
@@ -266,30 +252,24 @@ public class DnsClient1 {
 		// Send the packet
 		clientSocket.send(sendPacket);
 		
-		//calculate time of the process
 		long startTime = System.currentTimeMillis();
 
 		
 		int retry = 0;
-		
-		// setting timeout based on inputed values
 		clientSocket.setSoTimeout(timeout*1000);
 
-		
 		while(retry<=maxRetry) {
 			try {
-				// keep trying to receive packets
 				clientSocket.receive(receivePacket);
 				break;
 			}
 			catch(SocketTimeoutException e) {
-				//if not received then resend
 				clientSocket.send(sendPacket);
 				retry++;
 			}
 		}
 
-		// if it increases maxretry, then socket exception
+
 		if(retry>maxRetry) {
 			try {
 				maxRetriesError(maxRetry);
@@ -301,12 +281,12 @@ public class DnsClient1 {
 
 		// Receive data from the server
 
-		// calculate total time taken
+		//clientSocket.receive(receivePacket);
 		long endTime = System.currentTimeMillis();
 		long timeTaken = (long)((endTime - startTime));
 		System.out.println("Response received after " + timeTaken + " milliseconds " + "(["  + retry + "]) " + "retries");
 
-		// call readpacket method
+		
         readPacket(receiveData, indx);
 
     }
@@ -473,10 +453,19 @@ public class DnsClient1 {
 					String IPString = Integer.toString(unSignedval7)+"."+Integer.toString(unSignedval8)+"."+Integer.toString(unSignedval9)+"."+Integer.toString(unSignedval10);
 		
 					System.out.println("IP \t" + IPString + "\t" + ttl + "ms"+ "\t" + auth);
-
+//					// RDATA is ip address for type A
+//					String ip_address = "";
+//					ip_address += Integer.toString(rdData[0] & 0xFF);
+//					//rdLength is used to get the ipaddress
+//					for (int j = 1; j < rdString1; j++) {
+//						ip_address += ".";
+//						ip_address += Integer.toString((rdData[j] & 0xFF));
+//					}
+//
+//					System.out.println("IP \t" + ip_address + "\t" + ttl + "\t" + auth);
 				}
 
-				// NS delegates you to an authoritative name server
+				// NS
 				
 				else if (responseType == 2) {
 					domainname = findDomainName(byteRec, indxrData);
@@ -484,15 +473,14 @@ public class DnsClient1 {
 					String alias = domainname;
 					System.out.println("NS \t" + alias + "\t" + ttl + "\t" + auth);
 				}
-				// CNAME: an alias for another dns record, refers to another host name; access the
-				// website in more than one way
+				// CNAME
 				else if (responseType == 5) {
 					domainname = findDomainName(byteRec, indxrData);
 					indexdomain = findDomainNameIndex(byteRec, indxrData);
 					String alias = domainname;
 					System.out.println("CNAME \t" + alias + "\t" + ttl + "\t" + auth);
 				}
-				// MX host name of the computer that handles the emails
+				// MX
 				else if (responseType == 15) {
 					int pref = (byteRec[indxrData] << 8) | byteRec[indxrData + 1];
 					indxrData = indxrData+ 2;
@@ -620,6 +608,7 @@ public class DnsClient1 {
 
 		return alias;
 	}
+
 
 
 	private static void maxRetriesError(int x) throws SocketTimeoutException {

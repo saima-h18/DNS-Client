@@ -165,7 +165,6 @@ public class DnsClient1 {
 		for(int j=0; j< bytesString.length;j++) {
 			if(Integer.parseInt(bytesString[j]) <0 || Integer.parseInt(bytesString[j])>255){
 				System.out.println("ERROR\t Please make sure your arguments follows the correct format");
-				System.exit(1);
 			}
 		}
 

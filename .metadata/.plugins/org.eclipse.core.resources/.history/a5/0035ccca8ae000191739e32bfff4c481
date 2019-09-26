@@ -160,14 +160,7 @@ public class DnsClient1 {
 		}
 
 		ip= ip.replaceAll("@","");
-		
 		String [] bytesString= ip.split("\\.");
-		for(int j=0; j< bytesString.length;j++) {
-			if(Integer.parseInt(bytesString[j]) <0 || Integer.parseInt(bytesString[j])>255){
-				System.out.println("ERROR\t Please make sure your arguments follows the correct format");
-				System.exit(1);
-			}
-		}
 
 		byte[] IPBytes = new byte [] {(byte) (Integer.parseInt(bytesString[0])), (byte) (Integer.parseInt(bytesString[1])), (byte) (Integer.parseInt(bytesString[2])), (byte) (Integer.parseInt(bytesString[3]))};
 
@@ -476,7 +469,7 @@ public class DnsClient1 {
 
 				}
 
-				// NS delegates you to an authoritative name server
+				// NS
 				
 				else if (responseType == 2) {
 					domainname = findDomainName(byteRec, indxrData);
@@ -484,15 +477,16 @@ public class DnsClient1 {
 					String alias = domainname;
 					System.out.println("NS \t" + alias + "\t" + ttl + "\t" + auth);
 				}
-				// CNAME: an alias for another dns record, refers to another host name; access the
-				// website in more than one way
+				// CNAME
 				else if (responseType == 5) {
 					domainname = findDomainName(byteRec, indxrData);
 					indexdomain = findDomainNameIndex(byteRec, indxrData);
 					String alias = domainname;
+					alias = alias.substring(0, alias.length() - 1);
+
 					System.out.println("CNAME \t" + alias + "\t" + ttl + "\t" + auth);
 				}
-				// MX host name of the computer that handles the emails
+				// MX
 				else if (responseType == 15) {
 					int pref = (byteRec[indxrData] << 8) | byteRec[indxrData + 1];
 					indxrData = indxrData+ 2;
