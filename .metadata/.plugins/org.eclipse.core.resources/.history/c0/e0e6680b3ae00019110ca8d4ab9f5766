@@ -1,0 +1,475 @@
+package lab1_416;
+
+
+import java.io.*;
+import java.net.*;
+import java.util.Arrays;
+import java.util.Random;
+import java.util.Timer;
+import java.lang.Math;
+import java.lang.reflect.Array;
+
+
+public class DnsClient1 {
+
+    public static void main(String[] args) throws Exception{
+
+        //default values for the various arguments
+        int timeout = 5;
+        int max_retries = 3;
+        int port = 53;
+        boolean a = true;
+        boolean mx = false;
+        boolean ns = false;
+        boolean t = false;
+        boolean r = false;
+        boolean p = false;
+        boolean validArg = false;
+        String serverIP = "";
+
+		//int timeout = 5;
+		int maxRetry = 3;
+		//int port = 53;
+		String Qtype = "A"; //1 = A , 2= NS, 15= MX
+
+		String Qname = "";
+		String ip = "";
+		String auth = "";
+		
+
+		int indxArgs = 0;
+		boolean at = false;
+		boolean syntax = false;
+//	    boolean mx = false;
+//	    boolean ns = false;
+//	    boolean t = false;
+//	    boolean r = false;
+//	    boolean p = false;
+		//reading the args
+
+
+		try {
+
+			for (int i = 0; i < args.length; i++) {
+				
+				if (args.length < 2) {
+		            System.out.println("ERROR\tIncorrect input syntax: Server and name must be specified as inputs.");
+		            
+		        }
+				
+				char[] arrArgs = args[i].toCharArray();            
+				for (int j = 0; j < arrArgs.length; j++) {  
+					if(i==args.length-2) {
+					if (arrArgs[j] == '@' ) {
+
+						ip = args[i];
+						Qname = args[i+1]; 
+						at = true;
+						break;
+					}                   
+//					else if (arrArgs[j] == '.') 
+//						indxArgs++ ;
+
+//					else if (arrArgs[j] != '@' && Character.isDigit(arrArgs[j]) && at)
+//						//ipArr[indxArgs] += arrArgs[j];
+//						ip = args[i];
+//					//System.out.println("args" + args[i]);
+//					}
+					else {
+						System.out.println("ERROR\t incorrect syntax");
+					}
+					
+				}   
+			}
+			}
+
+			
+			for (int i = 0; i < args.length-2; i++) {
+				syntax = false;
+
+				char[] arrArgs = args[i].toCharArray();            
+					for (int j = 0; j < arrArgs.length; j++) {  
+
+					if (arrArgs[j] == '-'){
+						if (arrArgs[j+1] == 't' && args[i].length()==2 && t==false) {
+							i++;
+							timeout = Integer.parseInt(args[i]);
+							t = true;
+							syntax = true;
+						}
+						else if (arrArgs[j+1] == 'r' && args[i].length()==2 && r==false) {
+							i++;
+							maxRetry = Integer.parseInt(args[i]);
+							r = true;
+							syntax = true;
+						}
+						else if (arrArgs[j+1] == 'p' && args[i].length()==2 && p==false) {
+							i++;
+							port = Integer.parseInt(args[i]);
+							p = true;
+							syntax = true;
+						}
+	
+						else if (arrArgs[j+1] == 'm' && arrArgs[j+2] == 'x' && args[i].length()==3 && mx==false) {
+							Qtype = "MX";
+							mx = true;
+							syntax = true;
+						}
+	
+						else if (arrArgs[j+1] == 'n' && arrArgs[j+2] == 's' && args[i].length()==3 && ns==false) {
+							Qtype = "NS";
+							ns = true;
+							syntax = true;
+						}
+						
+					}
+					if(syntax == false) {
+						System.out.println(args[i]);
+						System.out.println("ERROR\t Invalid Syntax");
+						System.exit(1);
+					}
+					
+					}
+			}
+			
+	        if (mx && ns) {
+	            System.out.println("ERROR\tIncorrect syntax: use only mx or ns.");
+	        }
+			
+			if (!at) {                              
+				System.out.println("The IP address entered is not correct. Please ensure to enter'@'");
+				System.exit(1);
+			}
+
+
+			//            if (atSign >1) {
+			//                System.out.println("ERROR   Only enter one '@'");
+			//                System.exit(1);
+			//            }
+
+			if (timeout == 0){
+				System.out.println("Please enter a value greater than 0 for the timeout");
+				System.exit(1);
+			}
+
+		} 
+
+		catch (IllegalArgumentException e) {
+			System.out.println("Please make sure your arguments follows the correct format");
+			System.exit(1);
+		}
+		if (ip == null || Qname == null) {
+			System.out.println("Please make sure to provide the IP address and domain name");
+			System.exit(1);
+		}
+
+		ip= ip.replaceAll("@","");
+		String [] bytesString= ip.split("\\.");
+
+		byte[] IPBytes = new byte [] {(byte) (Integer.parseInt(bytesString[0])), (byte) (Integer.parseInt(bytesString[1])), (byte) (Integer.parseInt(bytesString[2])), (byte) (Integer.parseInt(bytesString[3]))};
+
+		DatagramSocket clientSocket = new DatagramSocket();
+
+
+		InetAddress ipAddress = InetAddress.getByAddress(IPBytes);
+
+
+
+		// Allocate buffers for the data to be sent and received
+				byte[] sendData = new byte[1024];		
+				byte[] receiveData = new byte[1024];
+
+
+
+				Random y = new Random(); 
+				byte[] two = new byte[2];
+				y.nextBytes(two);
+
+				// Header
+				sendData[0] = two[0];
+				sendData[1] = two[1];
+
+				sendData[2] = 00000001;  //QR =0 , OPCODE = 0000 , AA =0 , TC=0 , RD =1 Recursion
+
+				sendData[3] = 00000000; // Ra, Z, RCODE = 0
+
+				sendData[4] = 00000000; // QDCOUNT = 1 , 16 bits
+
+				sendData[5] = 00000001; // QDCOUNT = 1 , 16 bits
+
+				sendData[6] = 00000000; // 
+
+				sendData[7] = 00000000; // 
+
+				sendData[8] = 00000000; // 
+
+				sendData[9] = 00000000; // 
+
+				sendData[10] = 0; // 
+				sendData[11] = 0; // 
+
+				//DATA           
+
+
+        
+				int indx = 12;
+
+				String [] Qstrings= Qname.split("\\.");
+
+
+				for(int i=0; i< Qstrings.length ; i++) {
+					sendData[indx] = (byte) Qstrings[i].length();
+					indx++;
+					char[] carray = Qstrings[i].toCharArray();
+
+					for(int j=0; j<carray.length; j++) {
+
+						sendData[indx] = (byte) carray[j]; //did operation then increment
+						indx++;
+					}
+
+				}
+				
+				sendData[indx] = 0; // End QName field 
+				indx++;
+
+				sendData[indx] = 0;	
+				indx++;
+				if(Qtype.equals("A")) {
+					sendData[indx] = 1;	
+				}
+				else if (Qtype.equals("NS")) {
+					sendData[indx] = 2;
+				}
+
+				else if (Qtype.equals("MX")) {
+					sendData[indx] = 15;	
+				}
+				indx++;
+				sendData[indx] = 0;	
+				indx++;
+				sendData[indx] = 1;	  // Qclass = 1
+
+
+				byte[] sendData2 = new byte[indx+1];
+		        java.lang.System.arraycopy(sendData, 0, sendData2, 0, indx+1);
+
+		        // Packages the data bytes into packets to be sent
+		        DatagramPacket sendPacket = new DatagramPacket(sendData2, sendData2.length, ipAddress, port);        DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+
+        System.out.println("DnsClient sending request for " + Qname);
+        System.out.println("Server: " + serverIP);
+        if (a) {
+            System.out.println("Request type: A");
+        } else if (mx) {
+            System.out.println("Request type: MX");
+        } else if (ns) {
+            System.out.println("Request type: NS");
+        }
+
+        int num_tries = 0;
+        boolean success = false;
+
+        long time_start = System.currentTimeMillis();
+
+        while (num_tries < max_retries && !success) {
+            try {
+                clientSocket.send(sendPacket);
+                clientSocket.receive(receivePacket);
+                success = true;
+            } catch (Exception e) {
+                num_tries++;
+            }
+        }
+
+        if (success) {
+            long time_end = System.currentTimeMillis();
+            long time = time_end - time_start;
+            System.out.println("Response received after " + (double) time / 1000 + " seconds (" + num_tries + " retries)");
+            parseResponse(receiveData, indx);
+        } else {
+            System.out.println("ERROR\tMaximum number of retries (" + num_tries + ") exceeded");
+        }
+    }
+
+	static void parseResponse(byte[] receiveData1, int index) {
+
+		String auth1;
+		if ((receiveData1[2] & 0x40) == 0x40) {
+			auth1 = "auth";
+		} else {
+			auth1 = "noauth";
+		}
+
+		byte truncated, ra;
+		truncated = (byte) (receiveData1[2] & 0x20);
+		ra = (byte) (receiveData1[3] & 0x80);
+
+		if (ra != (byte) 0x80)
+			System.out.println("ERROR\tServer does not support recursive queries");
+
+		int RCODE = (receiveData1[3] & 0x0F);
+		if (RCODE != 0x0) {
+			if (RCODE == 0x1)
+				System.out.println("ERROR\t[RCODE: 1] Format error");
+			else if (RCODE == 0x2)
+				System.out.println("ERROR\t[RCODE: 2] Server failure");
+			else if (RCODE == 0x3)
+				System.out.println("NOTFOUND\t[RCODE: 3] Referenced domain name does not exist");
+			else if (RCODE == 0x4)
+				System.out.println("ERROR\t[RCODE: 4] Not implemented");
+			else // 0x5
+				System.out.println("ERROR\t[RCODE: 5] Refused");
+			System.exit(1);
+		}
+
+		int nsCount = (receiveData1[8] << 8) | receiveData1[9];
+
+		int arCount = (receiveData1[10] << 8) | receiveData1[11];
+
+		int anCount = (receiveData1[6] << 8) | receiveData1[7];
+		System.out.println("***Answer Section (" + anCount + " records)***");
+
+		int answerIndex = index + 1;
+
+		answerIndex = parseSection(receiveData1, anCount, answerIndex, auth1, true);
+
+		answerIndex = parseSection(receiveData1, nsCount, answerIndex, auth1, false);
+
+		System.out.println("***Additional Section (" + arCount + " records)***");
+
+		answerIndex = parseSection(receiveData1, arCount, answerIndex, auth1, true);
+	}
+
+	public static int parseSection(byte[] receiveData, int count, int answerIndex, String auth, boolean print) {
+
+		for (int i = 0; i < count; i++) {
+
+			intString nameIndex = new intString();
+			nameIndex.s = "";
+			nameIndex.index = answerIndex;
+			nameIndex = getName(receiveData, nameIndex.index);
+			answerIndex = nameIndex.index;
+
+			int type = (receiveData[answerIndex] & 0xFF) << 8 | (receiveData[answerIndex + 1] & 0xFF);
+			answerIndex += 2;
+
+			int clss = (receiveData[answerIndex] & 0xFF) << 8 | (receiveData[answerIndex + 1] & 0xFF);
+			if (clss != 1){
+				System.out.println("ERROR\tA record has an incorrect class value");
+			}
+			answerIndex += 2;
+
+			int ttl = ((receiveData[answerIndex] & 0xFF) << 24 | receiveData[answerIndex + 1] & 0xFF) << 16 | (receiveData[answerIndex + 2] & 0xFF) << 8 | (receiveData[answerIndex + 3] & 0xFF);
+			answerIndex += 4;
+
+			int rdLength = (receiveData[answerIndex] & 0xFF) << 8 | (receiveData[answerIndex + 1] & 0xFF);
+			answerIndex += 2;
+
+			byte[] rdData = new byte[rdLength];
+			int rDataIndex = answerIndex;
+			for (int j = 0; j < rdLength; j++) {
+				rdData[j] = receiveData[answerIndex];
+				answerIndex++;
+			}
+			if (print) {
+				// Type A
+				if (type == 1) {
+					// RDATA is ip address for type A
+					String ip_address = "";
+					ip_address += Integer.toString(rdData[0] & 0xFF);
+					for (int j = 1; j < rdLength; j++) {
+						ip_address += ".";
+						ip_address += Integer.toString((rdData[j] & 0xFF));
+					}
+
+					System.out.println("IP \t" + ip_address + "\t" + ttl + "\t" + auth);
+				}
+
+				else if (type == 2) {
+					nameIndex = getName(receiveData, rDataIndex);
+					String alias = nameIndex.s;
+					System.out.println("NS \t" + alias + "\t" + ttl + "\t" + auth);
+				}
+
+				else if (type == 5) {
+					nameIndex = getName(receiveData, rDataIndex);
+					String alias = nameIndex.s;
+					System.out.println("CNAME \t" + alias + "\t" + ttl + "\t" + auth);
+				}
+				else if (type == 15) {
+					int pref = (receiveData[rDataIndex] << 8) | receiveData[rDataIndex + 1];
+					rDataIndex += 2;
+					nameIndex = getName(receiveData, rDataIndex);
+					String alias = nameIndex.s;
+					System.out.println("MX \t" + alias + "\t" + pref + "\t" + ttl + "\t" + auth);
+				}
+			}
+		}
+		return answerIndex;
+	}
+
+	static intString getName(byte[] receiveData, int answerIndex) {
+
+		intString nameIndex = new intString();
+
+		if ((receiveData[answerIndex] & 0xFF) >= 0xC0) {
+			nameIndex.s = getNameFromPointer(receiveData, answerIndex);
+			answerIndex += 2;
+			nameIndex.index = answerIndex;
+			return nameIndex;
+		}
+
+		nameIndex.s = "";
+
+		while (receiveData[answerIndex] != 0x00 && (receiveData[answerIndex] & 0xFF) < 0xc0) {
+			int lengthWord = receiveData[answerIndex++];
+			for (int i = 0; i < lengthWord; i++) {
+				nameIndex.s += Character.toString((char) (receiveData[answerIndex++] & 0xFF));
+			}
+			nameIndex.s += ".";
+		}
+
+		if ((receiveData[answerIndex] & 0xFF) >= 0xc0) {
+			nameIndex.s += getNameFromPointer(receiveData, answerIndex);
+			answerIndex += 2;
+			nameIndex.index = answerIndex;
+			return nameIndex;
+		}
+
+		nameIndex.s = nameIndex.s.substring(0, nameIndex.s.length() - 1);
+
+		nameIndex.index = answerIndex;
+		return nameIndex;
+	}
+
+	static String getNameFromPointer(byte[] receiveData, int answerIndex) {
+
+		int offset = (receiveData[answerIndex] & 0xFF) << 8 | (receiveData[answerIndex + 1] & 0xFF);
+
+		offset -= 0xc000;
+
+		String name = "";
+		while (receiveData[offset] != 0x00) {
+			int lengthWord = receiveData[offset++];
+			for (int i = 0; i < lengthWord; i++) {
+				name += Character.toString((char) (receiveData[offset++] & 0xFF));
+			}
+			name += ".";
+		}
+
+		name = name.substring(0, name.length() - 1);
+
+		return name;
+
+
+	}
+
+
+
+	private static void maxRetriesError(int x) throws SocketTimeoutException {
+		throw new SocketTimeoutException ();
+	}
+
+
+}

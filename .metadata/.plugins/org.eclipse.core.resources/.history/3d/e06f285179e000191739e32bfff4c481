@@ -1,0 +1,6 @@
+package lab1_416;
+
+public class intString {
+	public String s;
+	public int index;
+}
