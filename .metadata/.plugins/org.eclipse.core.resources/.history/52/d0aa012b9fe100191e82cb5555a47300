@@ -40,7 +40,7 @@ public class DnsClient {
 			for (int i = 0; i < args.length; i++) {
 				
 				if (args.length < 2) {
-		            System.out.println("ERROR\tIncorrect input syntax");
+		            System.out.println("ERROR\tIncorrect input syntax: Server and name must be specified as inputs.");
 		            
 		        }
 				
@@ -522,15 +522,15 @@ public class DnsClient {
 			
 			int lengthWord = byteRec[indx++];
 			for (int i = 0; i < lengthWord; i++) {
-				DomainName = DomainName + Character.toString((char) (byteRec[indx++] & 0xFF));
+				DomainName += Character.toString((char) (byteRec[indx++] & 0xFF));
 			}
-			DomainName = DomainName + ".";
+			DomainName += ".";
 		}
 
 		// Still possible to run into a pointer so run pointer method
 		// while running the domain name method
 		if ((byteRec[indx] & 0xFF) >= 0xc0) {
-			DomainName = DomainName + pointerName(byteRec, indx);
+			DomainName += pointerName(byteRec, indx);
 			indx= indx+2; // each pointer is 16 bits so increment bytes by 2
 			indexDomainName = indx;
 			return DomainName;
@@ -564,7 +564,7 @@ public class DnsClient {
 		// while running the domain name method
 		if ((byteRec[indx] & 0xFF) >= 0xc0) {
 			DomainName += pointerName(byteRec, indx);
-			indx = indx + 2;
+			indx += 2;
 			indexDomainName = indx;		// each pointer is 16 bits so increment bytes by 2
 			return indexDomainName;
 		}

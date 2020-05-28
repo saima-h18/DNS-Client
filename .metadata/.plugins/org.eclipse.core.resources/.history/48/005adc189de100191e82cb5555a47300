@@ -40,7 +40,7 @@ public class DnsClient {
 			for (int i = 0; i < args.length; i++) {
 				
 				if (args.length < 2) {
-		            System.out.println("ERROR\tIncorrect input syntax");
+		            System.out.println("ERROR\tIncorrect input syntax: Server and name must be specified as inputs.");
 		            
 		        }
 				
@@ -81,43 +81,41 @@ public class DnsClient {
 				// iterate through each character
 					for (int j = 0; j < arrArgs.length; j++) {  
 
-					if (arrArgs[j] == '-'){
+					//if (arrArgs[j] == '-'){
 						// checks if each variable is set to false because cannot enter 
 						// terms twice
-						if (arrArgs[j+1] == 't' && args[i].length()==2 && t==false) {
+						if (args[i] == "-t" && args[i].length()==2 && t==false) {
 							i++;
 							timeout = Integer.parseInt(args[i]);
 							t = true;
 							syntax = true;
 						}
-						else if (arrArgs[j+1] == 'r' && args[i].length()==2 && r==false) {
+						else if (args[i] == "-r" && args[i].length()==2 && r==false) {
 							i++;
 							maxRetry = Integer.parseInt(args[i]);
 							r = true;
 							syntax = true;
 						}
-						else if (arrArgs[j+1] == 'p' && args[i].length()==2 && p==false) {
+						else if (args[i] == "-p" && args[i].length()==2 && p==false) {
 							i++;
 							port = Integer.parseInt(args[i]);
 							p = true;
 							syntax = true;
 						}
 	
-						else if (arrArgs[j+1] == 'm' && arrArgs[j+2] == 'x' && args[i].length()==3 && mx==false) {
+						else if (args[i].equals("-mx")   && mx==false) {
 							Qtype = "MX";
 							mx = true;
-							a=false;
 							syntax = true;
 						}
 	
-						else if (arrArgs[j+1] == 'n' && arrArgs[j+2] == 's' && args[i].length()==3 && ns==false) {
+						else if (args[i] == "-ns"  && args[i].length()==3 && ns==false) {
 							Qtype = "NS";
 							ns = true;
-							a=false;
 							syntax = true;
 						}
 						
-					}
+					//}
 					// invalid syntax every other time
 					if(syntax == false) {
 						System.out.println("ERROR\t incorrect syntax \n Proper format: [-t] [-r] [-p] [-nx || -mx] @server name");
@@ -522,15 +520,15 @@ public class DnsClient {
 			
 			int lengthWord = byteRec[indx++];
 			for (int i = 0; i < lengthWord; i++) {
-				DomainName = DomainName + Character.toString((char) (byteRec[indx++] & 0xFF));
+				DomainName += Character.toString((char) (byteRec[indx++] & 0xFF));
 			}
-			DomainName = DomainName + ".";
+			DomainName += ".";
 		}
 
 		// Still possible to run into a pointer so run pointer method
 		// while running the domain name method
 		if ((byteRec[indx] & 0xFF) >= 0xc0) {
-			DomainName = DomainName + pointerName(byteRec, indx);
+			DomainName += pointerName(byteRec, indx);
 			indx= indx+2; // each pointer is 16 bits so increment bytes by 2
 			indexDomainName = indx;
 			return DomainName;
@@ -560,14 +558,25 @@ public class DnsClient {
 
 		// when no offset is recognized (no leading 1s)
 
+		while (byteRec[indx] != 0x00 && (byteRec[indx] & 0xFF) < 0xc0) {
+			int lengthWord = byteRec[indx++];
+			for (int i = 0; i < lengthWord; i++) {
+				DomainName += Character.toString((char) (byteRec[indx++] & 0xFF));
+			}
+			DomainName += ".";
+		}
+
 		// Still possible to run into a pointer so run pointer method
 		// while running the domain name method
 		if ((byteRec[indx] & 0xFF) >= 0xc0) {
 			DomainName += pointerName(byteRec, indx);
-			indx = indx + 2;
+			indx += 2;
 			indexDomainName = indx;		// each pointer is 16 bits so increment bytes by 2
 			return indexDomainName;
 		}
+
+		// extracts extra period at the end
+		DomainName = DomainName.substring(0, DomainName.length() - 1);
 
 		indexDomainName= indx;
 		return indexDomainName;
